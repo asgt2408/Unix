@@ -103,7 +103,7 @@ if [ -z "$commit" ]; then
 
 git status
 git add .
-git commit -m "$commit"
+git commit -m "$commit" --allow-empty
 
 echo "Pushing to GitHub..."
 git push origin main
@@ -117,7 +117,7 @@ connect_existing_repo() {
     repos=$(gh repo list --limit 50 --json name,url --jq '.[] | "\(.name) \(.url)"')
 
     if [ -z "$repos" ]; then
-        echo "❌ No repositories found on your GitHub account."
+        echo "No repositories found on your GitHub account."
         return
     fi
 
