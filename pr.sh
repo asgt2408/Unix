@@ -164,8 +164,79 @@ connect_existing_repo() {
     echo "----------------------------------------"
 }
 
+view(){
+echo "----------------------------------------"
+echo "Viewing the log history of this commit"
+echo "----------------------------------------"
+
+git log --oneline --graph --decorate --all
 
 
+}
+
+view_commit(){
+echo "----------------------------------------"
+echo "Viewing the commit"
+echo "----------------------------------------"
+
+read -p "Enter the commit id: " c_id
+
+if [ -n "$c_id" ]; then
+	git show "$c_id"
+fi
+
+}
+
+branch_merge(){
+    echo "----------------------------------------"
+    read -p "Enter name for the new feature branch: " branch
+
+    if [ -z "$branch" ]; then
+        echo "Branch name cannot be empty."
+        return
+    fi
+
+    echo "Creating and switching to branch '$branch'..."
+    git checkout -b "$branch"
+
+    echo "----------------------------------------"
+    read -p "Enter commit message for your work in this branch: " msg
+    if [ -z "$msg" ]; then
+        msg="Work done in branch $branch"
+    fi
+
+    git add .
+    git commit -m "$msg"
+
+    echo "----------------------------------------"
+    read -p "Do you want to merge this branch into MAIN? (y/n): " merge_choice
+
+    if [ "$merge_choice" == "y" ]; then
+        echo "Switching back to main branch..."
+        git checkout main
+
+        echo "Merging branch '$branch' into main..."
+        git merge "$branch"
+
+        echo "----------------------------------------"
+        read -p "Do you want to delete the feature branch '$branch'? (y/n): " delete_choice
+
+        if [ "$delete_choice" == "y" ]; then
+            git branch -d "$branch"
+            echo "Feature branch deleted."
+        else
+            echo "Feature branch kept."
+        fi
+
+        echo "----------------------------------------"
+        echo "Merge completed. You can push using the push option."
+    else
+        echo "----------------------------------------"
+        echo "Branch '$branch' kept separate. You can continue work later."
+    fi
+
+    echo "----------------------------------------"
+}
 
 echo "Main Menu"
 echo "1. Login into the github"
@@ -173,8 +244,10 @@ echo "2. Check the status of your github Account"
 echo "3. Create a repository"
 echo "4. Add all your work on your github Account"
 
-echo "5. Add your work in another repository"
-echo "6. Check all the existing repositories"
+echo "5. Change to another repository"
+echo "6. View the commit history"
+echo "7. View commit log"
+echo "8. Create a new branch and merge with main"
 
 
 read -p "Enter the choice: " choice
@@ -200,6 +273,16 @@ case "$choice" in
 
 5)
 	connect_existing_repo
+;;
+
+6) 
+	view
+;;
+
+7) view_commit
+;;
+
+8) branch_merge
 ;;
 
 *)
