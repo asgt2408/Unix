@@ -14,24 +14,22 @@ list_my_repos(){
 gh repo list 
 }
 
-delete_repo() {
+find_files() {
     echo "----------------------------------------"
-    read -p "Enter repo name to delete: " repo
+    echo "1. Find all shell scripts"
+    echo "2. Find all Python files"
+    echo "3. Find files modified in last 1 day"
+    echo "----------------------------------------"
+    read -p "Enter your choice: " ch
 
-    if [ -z "$repo" ]; then
-        echo "Repository name cannot be empty."
-        return
-    fi
+    case "$ch" in
+        1) find . -name "*.sh" ;;
+        2) find . -name "*.py" ;;
+        3) find . -mtime -1 ;;
+        *) echo "Invalid choice" ;;
+    esac
 
     echo "----------------------------------------"
-    echo "Attempting to delete repository: $repo"
-    echo "----------------------------------------"
-
-    # Refresh permissions if needed
-    echo "Note: If deletion fails, run:"
-    echo "gh auth refresh -h github.com -s delete_repo"
-    
-    gh repo delete "$repo" --yes
 }
 
 
@@ -47,6 +45,14 @@ read -p "Enter branch name to delete: " br
     git branch -d "$br"
 }
 
+search_commit(){
+echo "----------------------------------------"
+    read -p "Enter keyword to search in commit messages: " key
+    echo "Searching commits containing '$key'..."
+    echo "----------------------------------------"
+    git log --oneline | grep -i "$key"
+    echo "----------------------------------------"
+}
 
 
 
@@ -410,8 +416,8 @@ echo "14. Show all github repos"
 echo "15. Delete github repository"
 echo "16. Open repo on web"
 echo "17.. Compare between two commits"
-
-
+echo "18. Search commits by keyword"
+echo "19. Use find to locate specific files"
 
 read -p "Enter the choice: " choice
 
@@ -469,10 +475,19 @@ case "$choice" in
 15) delete_repo
 ;;
 
-16) open_web
+16) open_repo
 ;;
 17) compare
+
 ;;
+
+18) search_commit
+;;
+
+19) find_files
+;;
+
+
 *)
 
 echo "Invalid choice"
