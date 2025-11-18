@@ -9,6 +9,7 @@ manage repositories, branches, commits, clones, and more.
 
 📜 Main Menu Options & Descriptions
 1.) Login into GitHub 
+
 2.) Check the status of your GitHub account 
 3.) Create a repository 
 4.) Add all your work to your GitHub account 
