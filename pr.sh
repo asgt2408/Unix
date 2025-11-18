@@ -187,7 +187,7 @@ fi
 
 }
 
-branch_merge(){
+branch_merge() {
     echo "----------------------------------------"
     read -p "Enter name for the new feature branch: " branch
 
@@ -209,7 +209,17 @@ branch_merge(){
     git commit -m "$msg"
 
     echo "----------------------------------------"
-    read -p "Do you want to merge this branch into MAIN? (y/n): " merge_choice
+    read -p "Do you want to PUSH this branch to GitHub? (y/n): " push_choice
+
+    if [ "$push_choice" == "y" ]; then
+        git push -u origin "$branch"
+        echo "Branch '$branch' pushed to GitHub."
+    else
+        echo "Branch not pushed. It exists only locally."
+    fi
+
+    echo "----------------------------------------"
+    read -p "Do you want to MERGE this branch into MAIN? (y/n): " merge_choice
 
     if [ "$merge_choice" == "y" ]; then
         echo "Switching back to main branch..."
@@ -219,24 +229,25 @@ branch_merge(){
         git merge "$branch"
 
         echo "----------------------------------------"
-        read -p "Do you want to delete the feature branch '$branch'? (y/n): " delete_choice
+        read -p "Do you want to DELETE the feature branch '$branch'? (y/n): " delete_choice
 
         if [ "$delete_choice" == "y" ]; then
             git branch -d "$branch"
-            echo "Feature branch deleted."
+            echo "Feature branch '$branch' deleted."
         else
             echo "Feature branch kept."
         fi
 
         echo "----------------------------------------"
-        echo "Merge completed. You can push using the push option."
+        echo "Merge completed. You can push the updated main branch now."
     else
         echo "----------------------------------------"
-        echo "Branch '$branch' kept separate. You can continue work later."
+        echo "Branch '$branch' not merged. You can continue working on it."
     fi
 
     echo "----------------------------------------"
 }
+
 
 echo "Main Menu"
 echo "1. Login into the github"
