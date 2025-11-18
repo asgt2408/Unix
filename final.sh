@@ -1,0 +1,486 @@
+#!/bin/bash
+
+
+compare(){
+    echo "----------------------------------------"
+    echo "Compare Two Commits"
+    echo "----------------------------------------"
+    echo
+
+    read -p "Enter first commit ID: " c1
+    if [ -z "$c1" ]; then
+        echo "Error: First commit cannot be empty."
+        return
+    fi
+
+    read -p "Enter second commit ID: " c2
+    if [ -z "$c2" ]; then
+        echo "Error: Second commit cannot be empty."
+        return
+    fi
+
+    git diff "$c1" "$c2"
+}
+
+check_url(){
+echo "Currently in : "
+git remote -v
+}
+
+list_my_repos(){
+gh repo list 
+}
+
+find_files() {
+    echo "----------------------------------------"
+    echo "1. Find all shell scripts"
+    echo "2. Find all Python files"
+    echo "3. Find files modified in last 1 day"
+    echo "----------------------------------------"
+    read -p "Enter your choice: " ch
+
+    case "$ch" in
+        1) find . -name "*.sh" ;;
+        2) find . -name "*.py" ;;
+        3) find . -mtime -1 ;;
+        *) echo "Invalid choice" ;;
+    esac
+
+    echo "----------------------------------------"
+}
+
+
+open_repo(){
+    read -p "Enter repo name: " r
+    gh repo view "$r" --web
+}
+
+
+delete_branch(){
+
+    read -p "Enter branch name to delete: " br
+    git branch -d "$br"
+}
+
+search_commit(){
+    echo "----------------------------------------"
+    read -p "Enter keyword to search in commit messages: " key
+    echo "Searching commits containing '$key'..."
+    echo "----------------------------------------"
+    git log --oneline | grep -i "$key"
+    echo "----------------------------------------"
+}
+
+
+
+clone(){
+    echo "----------------------------------------"
+    echo "Clone a GitHub Repository"
+    echo "----------------------------------------"
+
+    read -p "Enter the GitHub repository URL to clone: " url
+
+    if [ -z "$url" ]; then
+        echo "URL cannot be empty."
+        return
+    fi
+
+    echo "----------------------------------------"
+    echo "Checking if folder already exists..."
+    echo "----------------------------------------"
+
+    
+    folder=$(basename "$url" .git)
+
+    if [ -d "$folder" ]; then
+        echo "⚠ Folder '$folder' already exists!"
+        read -p "Do you want to overwrite it by deleting? (y/n): " ans
+        if [ "$ans" == "y" ]; then
+            rm -rf "$folder"
+            echo "Old folder deleted."
+        else
+            echo "Clone cancelled."
+            return
+        fi
+    fi
+
+    echo "Cloning repository..."
+    git clone "$url"
+
+    if [ $? -ne 0 ]; then
+        echo "Clone failed! Please check the URL."
+        return
+    fi
+
+    echo "✔ Repository cloned successfully into folder: $folder"
+    echo "----------------------------------------"
+
+    read -p "Do you want to enter the cloned folder now? (y/n): " enter
+
+    if [ "$enter" == "y" ]; then
+        cd "$folder"
+        echo "Now inside folder: $(pwd)"
+    else
+        echo "Staying in current directory."
+    fi
+
+    echo "----------------------------------------"
+}
+
+
+switch_branch(){
+echo "----------------------------------------"
+echo "Attempting to switch the branch..."
+echo "----------------------------------------"
+
+read -p "Enter branch name to switch: " br
+git checkout "$br"
+
+}
+
+
+login(){
+echo "----------------------------------------"
+echo "Attempting to log in to GitHub..."
+echo "----------------------------------------"
+gh auth login
+}
+
+status(){
+gh auth status
+}
+
+view_branches() {
+    echo "----------------------------------------"
+    echo "Available Local Branches:"
+    git branch
+    echo "----------------------------------------"
+    echo "Available Remote Branches:"
+    git branch -r
+    echo "----------------------------------------"
+    current=$(git branch --show-current)
+    echo "You are currently on branch: $current"
+    echo "----------------------------------------"
+}
+
+
+create_repo(){
+echo "----------------------------------------"
+echo "Attempting to create a new repository..."
+echo "----------------------------------------"
+
+ git config --global user.name "Ashu Gupta"
+    git config --global user.email "ashugt73@gmail.com"
+
+
+ git config --global --add safe.directory "$(pwd)"
+read -p "Enter the name for the repository: " repo
+
+if [ -z "$repo" ]; then
+        echo "Repository name cannot be empty."
+        return
+fi
+
+
+read -p "Enter the description for the repo/project: " desc
+
+echo "Select repo visibility"
+echo "1. Public"
+echo "2. Private"
+read -p "Enter your choice (public/private): " choice
+
+if [ "$choice" == "1" ]; then
+	visibility="--public"
+elif [ "$choice" == "2" ]; then
+	visibility="--private"
+else
+	echo "Invalid choice. Redirecting to Public."
+	visibility="--public"
+fi
+
+echo
+echo "Creating repository '$repo' ..."
+gh repo create "$repo" $visibility --description "$desc"
+
+echo "----------------------------------------"
+echo "Repo created successfully" "$repo"
+echo "Description" "$desc"
+echo "Visibility: $visibility"
+echo "----------------------------------------" 
+
+username=$(gh api user --jq '.login')
+
+url="https://github.com/$username/$repo.git"
+
+
+if [ -d .git ]; then
+    echo "A Git repository already exists in this folder."
+    read -p "Do you want to delete existing .git and reinitialize? (y/n): " ans
+    if [ "$ans" == "y" ]; then
+        echo "Deleting previous .git folder..."
+        rm -rf .git
+    else
+        echo "Operation cancelled."
+        return
+    fi
+fi
+
+#Initialize and connect to repo
+
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin "$url"
+git push -u origin main
+
+
+}
+
+push(){
+
+echo "----------------------------------------"
+echo "Attempting to push all the work into your repository..."
+echo "----------------------------------------"
+
+
+if [ ! -d .git ]; then
+        echo "This folder is not a Git repository!"
+        echo "Run 'Create Repository' option first."
+        return
+    fi
+
+
+read -p "Enter the message for this commit: " commit
+if [ -z "$commit" ]; then
+        commit="Updated project work"
+    fi
+
+
+git status
+git add .
+git commit -m "$commit" --allow-empty
+
+echo "Pushing to GitHub..."
+git push origin main
+}
+
+connect_existing_repo() {
+    echo "----------------------------------------"
+    echo "Fetching your GitHub repositories..."
+    echo "----------------------------------------"
+
+    repos=$(gh repo list --limit 50 --json name,url --jq '.[] | "\(.name) \(.url)"')
+
+    if [ -z "$repos" ]; then
+        echo "No repositories found on your GitHub account."
+        return
+    fi
+
+    i=1
+    echo "Select a repository to connect:"
+    while read -r line; do
+        echo "$i) $line"
+        repos_arr[$i]="$line"
+        ((i++))
+    done <<< "$repos"
+
+    read -p "Enter your choice: " choice
+
+    selected="${repos_arr[$choice]}"
+    repo_url=$(echo "$selected" | awk '{print $2}')
+
+    echo "----------------------------------------"
+    echo "Connecting to $repo_url"
+    echo "----------------------------------------"
+
+    # Remove old origin
+    if git remote | grep -q origin; then
+        git remote remove origin
+    fi
+
+    # Add new origin
+    git remote add origin "$repo_url.git"
+
+    # Ensure branch is main
+    git branch -M main
+
+    echo "Saving your local changes temporarily (stash)..."
+    git stash push -m "temp-stash-for-merge"
+
+    echo "Pulling existing commits from GitHub (merging histories)..."
+    git pull origin main --allow-unrelated-histories --no-rebase
+
+    echo "Applying your local changes back..."
+    git stash pop
+
+    echo "----------------------------------------"
+    echo "✔ Successfully connected and merged remote commits!"
+    echo "You can now push safely using your push() function."
+    echo "----------------------------------------"
+}
+
+view(){
+echo "----------------------------------------"
+echo "Viewing the log history of this commit"
+echo "----------------------------------------"
+
+git log --oneline --graph --decorate --all
+
+
+}
+
+view_commit(){
+echo "----------------------------------------"
+echo "Viewing the commit"
+echo "----------------------------------------"
+
+read -p "Enter the commit id: " c_id
+
+if [ -n "$c_id" ]; then
+	git show "$c_id"
+fi
+
+}
+
+branch_merge() {
+    echo "----------------------------------------"
+    read -p "Enter name for the new feature branch: " branch
+
+    if [ -z "$branch" ]; then
+        echo "Branch name cannot be empty."
+        return
+    fi
+
+    echo "Creating and switching to branch '$branch'..."
+    git checkout -b "$branch"
+
+    echo "----------------------------------------"
+    read -p "Enter commit message for your work in this branch: " msg
+    if [ -z "$msg" ]; then
+        msg="Work done in branch $branch"
+    fi
+
+    git add .
+    git commit -m "$msg"
+
+    echo "----------------------------------------"
+    read -p "Do you want to PUSH this branch to GitHub? (y/n): " push_choice
+
+    if [ "$push_choice" == "y" ]; then
+        git push -u origin "$branch"
+        echo "Branch '$branch' pushed to GitHub."
+    else
+        echo "Branch not pushed. It exists only locally."
+    fi
+
+    echo "----------------------------------------"
+    read -p "Do you want to MERGE this branch into MAIN? (y/n): " merge_choice
+
+    if [ "$merge_choice" == "y" ]; then
+        echo "Switching back to main branch..."
+        git checkout main
+
+        echo "Merging branch '$branch' into main..."
+        git merge "$branch"
+
+        echo "----------------------------------------"
+        read -p "Do you want to DELETE the feature branch '$branch'? (y/n): " delete_choice
+
+        if [ "$delete_choice" == "y" ]; then
+            git branch -d "$branch"
+            echo "Feature branch '$branch' deleted."
+        else
+            echo "Feature branch kept."
+        fi
+
+        echo "----------------------------------------"
+        echo "Merge completed. You can push the updated main branch now."
+    else
+        echo "----------------------------------------"
+        echo "Branch '$branch' not merged. You can continue working on it."
+    fi
+
+    echo "----------------------------------------"
+}
+
+while true
+do
+echo "----------------------------------------"
+echo "Main Menu"
+echo "1. Login into the github"
+echo "2. Check the status of your github Account"
+echo "3. Create a repository"
+echo "4. Add all your work on your github Account"
+echo "5. Change to another repository"
+echo "6. View the commit history"
+echo "7. View commit log"
+echo "8. Create a new branch and merge with main"
+echo "9. View all branches"
+echo "10. Switch to other branch"
+echo "11. Clone a github repository"
+echo "12. Want to check in which repo you are currently in"
+echo "13. Delete a branch"
+echo "14. Show all github repos"
+echo "15. Open repo on web"
+echo "16.. Compare between two commits"
+echo "17. Search commits by keyword"
+echo "18. Use find to locate specific files"
+echo "19. EXIT"
+echo "----------------------------------------"
+
+read -p "Enter the choice: " choice
+
+
+
+case "$choice" in 
+1) echo "You selected: Login into the github"
+	login ;;
+
+2) echo "You selected: Check you account status"
+	status ;;
+
+3) echo "You selected: Create a repository"
+	create_repo ;;
+
+4) echo "You selected: Add all work onto github"
+	push ;;
+
+5) connect_existing_repo ;;
+
+6)  view ;;
+
+7) view_commit ;;
+
+8) branch_merge ;;
+
+9) view_branches ;;
+
+10) switch_branch ;;
+
+11) clone ;;
+
+12) check_url  ;;
+
+13) delete_branch ;;
+
+14) list_my_repos ;;
+
+15) open_repo ;;
+
+16) compare;;
+
+17) search_commit;;
+
+18) find_files ;;
+
+
+19) echo "Exiting..."; exit 0 ;;
+        *) echo "Invalid choice, please try again." ;;
+   
+esac
+
+    echo
+    read -p "Press ENTER to return to the Main Menu..."
+    clear
+done
