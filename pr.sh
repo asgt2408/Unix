@@ -1,4 +1,116 @@
 #!/bin/bash
+compare(){
+read -p "Enter first commit: " c1
+    read -p "Enter second commit: " c2
+    git diff "$c1" "$c2"
+}
+check_url(){
+echo "Currently in : "
+git remote -v
+
+}
+
+list_my_repos(){
+gh repo list 
+}
+
+delete_repo() {
+    echo "----------------------------------------"
+    read -p "Enter repo name to delete: " repo
+
+    if [ -z "$repo" ]; then
+        echo "Repository name cannot be empty."
+        return
+    fi
+
+    echo "----------------------------------------"
+    echo "Attempting to delete repository: $repo"
+    echo "----------------------------------------"
+
+    # Refresh permissions if needed
+    echo "Note: If deletion fails, run:"
+    echo "gh auth refresh -h github.com -s delete_repo"
+    
+    gh repo delete "$repo" --yes
+}
+
+
+open_repo(){
+ read -p "Enter repo name: " r
+    gh repo view "$r" --web
+}
+
+
+delete_branch(){
+
+read -p "Enter branch name to delete: " br
+    git branch -d "$br"
+}
+
+
+
+
+clone(){
+    echo "----------------------------------------"
+    echo "Clone a GitHub Repository"
+    echo "----------------------------------------"
+
+    read -p "Enter the GitHub repository URL to clone: " url
+
+    if [ -z "$url" ]; then
+        echo "URL cannot be empty."
+        return
+    fi
+
+    echo "----------------------------------------"
+    echo "Checking if folder already exists..."
+    echo "----------------------------------------"
+
+    # Extract folder name from URL
+    folder=$(basename "$url" .git)
+
+    if [ -d "$folder" ]; then
+        echo "⚠ Folder '$folder' already exists!"
+        read -p "Do you want to overwrite it by deleting? (y/n): " ans
+        if [ "$ans" == "y" ]; then
+            rm -rf "$folder"
+            echo "Old folder deleted."
+        else
+            echo "Clone cancelled."
+            return
+        fi
+    fi
+
+    echo "Cloning repository..."
+    git clone "$url"
+
+    if [ $? -ne 0 ]; then
+        echo "Clone failed! Please check the URL."
+        return
+    fi
+
+    echo "✔ Repository cloned successfully into folder: $folder"
+    echo "----------------------------------------"
+
+    read -p "Do you want to enter the cloned folder now? (y/n): " enter
+
+    if [ "$enter" == "y" ]; then
+        cd "$folder"
+        echo "Now inside folder: $(pwd)"
+    else
+        echo "Staying in current directory."
+    fi
+
+    echo "----------------------------------------"
+}
+
+
+
+
+
+
+
+
 
 switch_branch(){
 echo "----------------------------------------"
@@ -291,6 +403,15 @@ echo "7. View commit log"
 echo "8. Create a new branch and merge with main"
 echo "9. View all branches"
 echo "10. Switch to other branch"
+echo "11. Clone a github repository"
+echo "12. Want to check in which repo you are currently in"
+echo "13. Delete a branch"
+echo "14. Show all github repos"
+echo "15. Delete github repository"
+echo "16. Open repo on web"
+echo "17.. Compare between two commits"
+
+
 
 read -p "Enter the choice: " choice
 
@@ -331,6 +452,26 @@ case "$choice" in
 ;;
 
 10) switch_branch
+;;
+
+11) clone
+;;
+
+12) check_url 
+;;
+
+13) delete_branch
+;;
+
+14) list_my_repos
+;;
+
+15) delete_repo
+;;
+
+16) open_web
+;;
+17) compare
 ;;
 *)
 
