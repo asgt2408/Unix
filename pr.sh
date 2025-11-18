@@ -1,5 +1,14 @@
 #!/bin/bash
 
+switch_branch(){
+echo "----------------------------------------"
+echo "Attempting to switch the branch..."
+echo "----------------------------------------"
+
+read -p "Enter branch name to switch: " br
+git checkout "$br"
+
+}
 
 
 login(){
@@ -281,6 +290,7 @@ echo "6. View the commit history"
 echo "7. View commit log"
 echo "8. Create a new branch and merge with main"
 echo "9. View all branches"
+echo "10. Switch to other branch"
 
 read -p "Enter the choice: " choice
 
@@ -320,6 +330,8 @@ case "$choice" in
 9) view_branches
 ;;
 
+10) switch_branch
+;;
 *)
 
 echo "Invalid choice"
