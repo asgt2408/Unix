@@ -13,6 +13,20 @@ status(){
 gh auth status
 }
 
+view_branches() {
+    echo "----------------------------------------"
+    echo "Available Local Branches:"
+    git branch
+    echo "----------------------------------------"
+    echo "Available Remote Branches:"
+    git branch -r
+    echo "----------------------------------------"
+    current=$(git branch --show-current)
+    echo "You are currently on branch: $current"
+    echo "----------------------------------------"
+}
+
+
 create_repo(){
 echo "----------------------------------------"
 echo "Attempting to create a new repository..."
@@ -63,9 +77,16 @@ url="https://github.com/$username/$repo.git"
 
 
 if [ -d .git ]; then
+    echo "A Git repository already exists in this folder."
+    read -p "Do you want to delete existing .git and reinitialize? (y/n): " ans
+    if [ "$ans" == "y" ]; then
         echo "Deleting previous .git folder..."
         rm -rf .git
+    else
+        echo "Operation cancelled."
+        return
     fi
+fi
 
 #Initialize and connect to repo
 
@@ -259,7 +280,7 @@ echo "5. Change to another repository"
 echo "6. View the commit history"
 echo "7. View commit log"
 echo "8. Create a new branch and merge with main"
-
+echo "9. View all branches"
 
 read -p "Enter the choice: " choice
 
@@ -294,6 +315,9 @@ case "$choice" in
 ;;
 
 8) branch_merge
+;;
+
+9) view_branches
 ;;
 
 *)
