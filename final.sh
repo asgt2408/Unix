@@ -482,5 +482,5 @@ esac
 
     echo
     read -p "Press ENTER to return to the Main Menu..."
-    clear
+#    clear
 done
